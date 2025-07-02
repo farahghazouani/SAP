@@ -717,7 +717,7 @@ else:
                 st.markdown("""
                     Ce graphique présente le total des opérations de lecture et d'écriture par type de tâche.
                     * **READDIRCNT** : Nombre de lectures directes (accès spécifiques à des blocs de données).
-                    * **READSEQCNT** : Nombre de lectures séquentielles (accès consécutifs aux données).
+                    * **READSEQCNT** : Nombre de lectures séquentielles (accès consécutives aux données).
                     * **CHNGCNT** : Nombre de changements (écritures) d'enregistrements.
                     * **PHYREADCNT** : Nombre total de lectures physiques (lectures réelles depuis le disque).
                     Ces métriques sont cruciales pour comprendre l'intensité des interactions de chaque tâche avec la base de données ou le système de fichiers.
