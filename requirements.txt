@@ -2,6 +2,5 @@ streamlit
 pandas
 plotly
 numpy
-scipy
-openpyxl  
-statsmodels
+scipy==1.10.1
+statsmodels==0.14.0
