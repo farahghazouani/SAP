@@ -1021,10 +1021,11 @@ else:
                         if not top_task_perf_intermediate.empty and top_task_perf_intermediate['RESPTI'].sum() > 0:
                             # Ensure columns are numeric before division
                             for col in perf_cols_task:
-                                task_perf_intermediate[col] = pd.to_numeric(task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
+                                # FIX: Corrected variable name from task_perf_intermediate to top_task_perf_intermediate
+                                top_task_perf_intermediate[col] = pd.to_numeric(top_task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
                             
                             # Apply division only to the numeric columns
-                            task_perf = task_perf_intermediate.copy() # Create a copy
+                            task_perf = top_task_perf_intermediate.copy() # Create a copy
                             for col in perf_cols_task:
                                 task_perf[col] = task_perf[col] / 1000.0
                             
