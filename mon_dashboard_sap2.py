@@ -100,7 +100,7 @@ def load_and_process_data(file_key, path):
             numeric_cols = ['MEMSUM', 'PRIVSUM', 'USEDBYTES', 'MAXBYTES', 'MAXBYTESDI', 'PRIVCOUNT', 'RESTCOUNT', 'COUNTER']
             for col in numeric_cols:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             if 'ACCOUNT' in df.columns:
                 df['ACCOUNT'] = clean_string_column(df['ACCOUNT'], 'Compte Inconnu')
@@ -143,8 +143,7 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    # Convertir en float et remplir les NaN avec 0 pour les calculs
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             if 'ENDDATE' in df.columns and 'ENDTIME' in df.columns:
                 df['ENDTIME_STR'] = df['ENDTIME'].astype(str).str.zfill(6)
@@ -178,8 +177,7 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    # Convertir en float et remplir les NaN avec 0 pour les calculs
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             subset_cols_times = []
             if 'RESPTI' in df.columns: subset_cols_times.append('RESPTI')
@@ -205,8 +203,7 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    # Convertir en float et remplir les NaN avec 0 pour les calculs
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             subset_cols_tasktimes = []
             if 'COUNT' in df.columns: subset_cols_tasktimes.append('COUNT')
@@ -233,8 +230,7 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    # Convertir en float et remplir les NaN avec 0 pour les calculs
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             # Add FULL_DATETIME creation for usertcode
             if 'ENDDATE' in df.columns and 'ENDTIME' in df.columns:
@@ -277,7 +273,7 @@ def load_and_process_data(file_key, path):
             numeric_cols_perf = ['WP_NO', 'WP_IRESTRT', 'WP_PID', 'WP_INDEX']
             for col in numeric_cols_perf:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float) # Ajout .astype(float)
             
             # Supprimer les lignes avec des valeurs critiques manquantes si nécessaire
             subset_cols_perf = []
@@ -291,8 +287,7 @@ def load_and_process_data(file_key, path):
             numeric_cols_sql = ['TOTALEXEC', 'IDENTSEL', 'EXECTIME', 'RECPROCNUM', 'TIMEPEREXE', 'RECPEREXE', 'AVGTPERREC', 'MINTPERREC']
             for col in numeric_cols_sql:
                 if col in df.columns:
-                    # Convertir en float et remplir les NaN avec 0 pour les calculs
-                    df[col] = clean_numeric_with_comma(df[col]).astype(float)
+                    df[col] = clean_numeric_with_comma(df[col]).astype(float) # Ajout .astype(float)
             
             # Nettoyage des colonnes string
             for col in ['SQLSTATEM', 'SERVERNAME', 'TRANS_ID']:
@@ -574,7 +569,7 @@ else:
 
             st.subheader("Top Types de Tâches (TASKTYPE) par Utilisation Mémoire (USEDBYTES)")
             if 'TASKTYPE' in df_mem.columns and 'USEDBYTES' in df_mem.columns and df_mem['USEDBYTES'].sum() > 0:
-                top_tasktype_mem = df_mem.groupby('TASKTYPE', as_index=False)['USEDBYTES'].sum().nlargest(3)
+                top_tasktype_mem = df_mem.groupby('TASKTYPE', as_index=False)['USEDBYTES'].sum().nlargest(3, 'USEDBYTES') # Ajout de 'USEDBYTES' comme critère
                 if not top_tasktype_mem.empty and top_tasktype_mem['USEDBYTES'].sum() > 0:
                     fig_top_tasktype_mem = px.bar(top_tasktype_mem,
                                                 x='TASKTYPE', y='USEDBYTES',
@@ -717,8 +712,6 @@ else:
                 st.info("Colonnes 'RESPTI' ou 'CPUTI' manquantes ou leurs totaux sont zéro/vide après filtrage pour la corrélation.")
             
             io_detailed_metrics_counts = ['READDIRCNT', 'READSEQCNT', 'CHNGCNT', 'PHYREADCNT']
-            io_detailed_metrics_buffers_records = ['READDIRBUF', 'READDIRREC', 'READSEQBUF', 'READSEQREC', 'CHNGREC', 'PHYCHNGREC']
-
             if 'TASKTYPE' in df_user.columns and all(col in df_user.columns for col in io_detailed_metrics_counts) and df_user[io_detailed_metrics_counts].sum().sum() > 0:
                 st.subheader("Total des Opérations de Lecture/Écriture (Comptes) par Type de Tâche")
                 st.markdown("""
@@ -741,6 +734,7 @@ else:
             else:
                 pass
 
+            io_detailed_metrics_buffers_records = ['READDIRBUF', 'READDIRREC', 'READSEQBUF', 'READSEQREC', 'CHNGREC', 'PHYCHNGREC']
             if 'TASKTYPE' in df_user.columns and all(col in df_user.columns for col in io_detailed_metrics_buffers_records) and df_user[io_detailed_metrics_buffers_records].sum().sum() > 0:
                 st.subheader("Utilisation des Buffers et Enregistrements par Type de Tâche")
                 st.markdown("""
@@ -962,7 +956,7 @@ else:
                 """)
             io_metrics_tasktimes = ['READDIRCNT', 'READSEQCNT', 'CHNGCNT', 'PHYREADCNT', 'PHYCHNGREC']
             if 'TASKTYPE' in df_task.columns and all(col in df_task.columns for col in io_metrics_tasktimes) and df_task[io_metrics_tasktimes].sum().sum() > 0:
-                df_io_tasktimes = df_task.groupby('TASKTYPE', as_index=False)[io_metrics_tasktimes].sum().nlargest(10, 'PHYREADCNT')
+                df_io_tasktimes = df_task.groupby('TASKTYPE', as_index=False)[io_metrics_tasktimes].sum().nlargest(10, 'READDIRREC')
                 if not df_io_tasktimes.empty and df_io_tasktimes[io_metrics_tasktimes].sum().sum() > 0:
                     fig_io_tasktimes = px.bar(df_io_tasktimes, x='TASKTYPE', y=io_metrics_tasktimes,
                                               title="Opérations d'E/S par Type de Tâche (Top 10)",
@@ -1011,7 +1005,7 @@ else:
 
             st.subheader("Tendance du Temps de Réponse Moyen et Temps CPU par Heure (Hitlist DB)")
             hitlist_perf_cols = ['RESPTI', 'CPUTI']
-            if 'FULL_DATETIME' in df_hitlist.columns and all(col in df_hitlist.columns for col in hitlist_perf_cols) and pd.api.types.is_datetime64_any_dtype(df_hitlist['FULL_DATETIME']) and not df_hitlist['FULL_DATETIME'].isnull().all() and df_hitlist[hitlist_perf_cols].sum().sum() > 0:
+            if 'FULL_DATETIME' in df_hitlist.columns and all(col in df_hitlist.columns for col in hitlist_perf_cols) and pd.api.types.is_datetime64_any_dtype(df_hitlist['FULL_DATETIME']) and not df_hitlist[hitlist_perf_cols].sum().sum() == 0:
                 hourly_metrics = df_hitlist.set_index('FULL_DATETIME')[hitlist_perf_cols].resample('H').mean().dropna()
                 if not hourly_metrics.empty and hourly_metrics.sum().sum() > 0:
                     fig_hourly_perf = px.line(hourly_metrics.reset_index(), x='FULL_DATETIME', y=hitlist_perf_cols,
