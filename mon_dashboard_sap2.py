@@ -385,7 +385,7 @@ tab_titles = [
     "Transactions Utilisateurs",
     "Statistiques Horaires",
     "Décomposition des Tâches",
-    "Insights Hitlist DB",
+    "Insights Hitlist DB", # This tab seems to be missing from the code, but it's in the list
     "Performance des Processus de Travail",
     "Résumé des Traces de Performance SQL",
     "Analyse des Utilisateurs"
@@ -1016,9 +1016,9 @@ else:
                 temp_task_perf = df_task.groupby('TASKTYPE', as_index=False)[perf_cols_task].mean()
                 
                 if not temp_task_perf.empty and 'RESPTI' in temp_task_perf.columns and pd.api.types.is_numeric_dtype(temp_task_perf['RESPTI']): # Check before nlargest and division
-                    if temp_task_perf['RESPTI'].dropna().count() >= 10: # Check if at least 10 non-NaN values for nlargest
-                        task_perf_intermediate = temp_task_perf.nlargest(10, 'RESPTI').sort_values(by='RESPTI', ascending=False)
-                        if not task_perf_intermediate.empty and task_perf_intermediate['RESPTI'].sum() > 0:
+                    if temp_task_perf['RESPTI'].dropna().count() >= 10: # Check if at least 10 non-NaN values
+                        top_task_perf_intermediate = temp_task_perf.nlargest(10, 'RESPTI').sort_values(by='RESPTI', ascending=False)
+                        if not top_task_perf_intermediate.empty and top_task_perf_intermediate['RESPTI'].sum() > 0:
                             # Ensure columns are numeric before division
                             for col in perf_cols_task:
                                 task_perf_intermediate[col] = pd.to_numeric(task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
@@ -1081,9 +1081,11 @@ else:
                 * **CHNGCNT (Changements)** : Nombre de changements (écritures) d'enregistrements.
                 * **PHYREADCNT (Lectures Physiques)** : Nombre total de lectures physiques (sur le disque).
                 * **PHYCHNGREC (Changements Physiques)** : Nombre total d'enregistrements physiquement modifiés.
+                * **READDIRREC (Enregistrements Lus Directement)** : Nombre d'enregistrements lus directement.
                 Ces métriques sont essentielles pour identifier les tâches gourmandes en E/S et évaluer l'efficacité de l'accès aux données.
                 """)
-            io_metrics_tasktimes = ['READDIRCNT', 'READSEQCNT', 'CHNGCNT', 'PHYREADCNT', 'PHYCHNGREC']
+            # FIX: Added 'READDIRREC' to the list so it's available for nlargest
+            io_metrics_tasktimes = ['READDIRCNT', 'READSEQCNT', 'CHNGCNT', 'PHYREADCNT', 'PHYCHNGREC', 'READDIRREC']
             if 'TASKTYPE' in df_task.columns and all(col in df_task.columns for col in io_metrics_tasktimes) and df_task[io_metrics_tasktimes].sum().sum() > 0:
                 # Ensure numeric types here
                 for col in io_metrics_tasktimes:
