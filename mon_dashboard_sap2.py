@@ -5,6 +5,7 @@ import numpy as np
 import io
 import re
 import plotly.figure_factory as ff
+import scipy # Ajouté pour résoudre ImportError avec create_distplot
 
 # --- Chemins vers vos fichiers de données ---
 # ATTENTION : Ces chemins ont été mis à jour pour être RELATIFS.
@@ -142,7 +143,8 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    # Convertir en float et remplir les NaN avec 0 pour les calculs
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
             
             if 'ENDDATE' in df.columns and 'ENDTIME' in df.columns:
                 df['ENDTIME_STR'] = df['ENDTIME'].astype(str).str.zfill(6)
@@ -176,7 +178,8 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    # Convertir en float et remplir les NaN avec 0 pour les calculs
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
             
             subset_cols_times = []
             if 'RESPTI' in df.columns: subset_cols_times.append('RESPTI')
@@ -202,7 +205,8 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    # Convertir en float et remplir les NaN avec 0 pour les calculs
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
             
             subset_cols_tasktimes = []
             if 'COUNT' in df.columns: subset_cols_tasktimes.append('COUNT')
@@ -229,7 +233,8 @@ def load_and_process_data(file_key, path):
             ]
             for col in numeric_cols:
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                    # Convertir en float et remplir les NaN avec 0 pour les calculs
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
             
             # Add FULL_DATETIME creation for usertcode
             if 'ENDDATE' in df.columns and 'ENDTIME' in df.columns:
@@ -254,7 +259,7 @@ def load_and_process_data(file_key, path):
         elif file_key == "performance": # Nouveau bloc pour AL_GET_PERFORMANCE
             # Convertir WP_CPU de MM:SS en secondes
             if 'WP_CPU' in df.columns:
-                df['WP_CPU_SECONDS'] = df['WP_CPU'].apply(convert_mm_ss_to_seconds)
+                df['WP_CPU_SECONDS'] = df['WP_CPU'].apply(convert_mm_ss_to_seconds).astype(float) # Convertir en float
             
             # Convertir WP_IWAIT en secondes (s'il est en ms, diviser par 1000)
             if 'WP_IWAIT' in df.columns:
@@ -286,7 +291,8 @@ def load_and_process_data(file_key, path):
             numeric_cols_sql = ['TOTALEXEC', 'IDENTSEL', 'EXECTIME', 'RECPROCNUM', 'TIMEPEREXE', 'RECPEREXE', 'AVGTPERREC', 'MINTPERREC']
             for col in numeric_cols_sql:
                 if col in df.columns:
-                    df[col] = clean_numeric_with_comma(df[col])
+                    # Convertir en float et remplir les NaN avec 0 pour les calculs
+                    df[col] = clean_numeric_with_comma(df[col]).astype(float)
             
             # Nettoyage des colonnes string
             for col in ['SQLSTATEM', 'SERVERNAME', 'TRANS_ID']:
@@ -801,10 +807,13 @@ else:
             st.subheader("Évolution du Nombre Total d'Appels Physiques (PHYCALLS) par Tranche Horaire")
             if 'TIME' in df_times_data.columns and 'PHYCALLS' in df_times_data.columns and df_times_data['PHYCALLS'].sum() > 0:
                 df_times_data['HOUR_OF_DAY'] = df_times_data['TIME'].apply(lambda x: str(x).split(':')[0].zfill(2) if ':' in str(x) else str(x).zfill(2)[:2])
-                hourly_counts = df_times_data.groupby('HOUR_OF_DAY', as_index=False)['PHYCALLS'].sum()
+                
+                # Appliquer fillna(0) sur la colonne numérique avant de grouper et de convertir en catégorie
+                hourly_counts = df_times_data.groupby('HOUR_OF_DAY', as_index=False)['PHYCALLS'].sum().fillna(0)
+                
                 hourly_categories = [str(i).zfill(2) for i in range(24)] # Générer toutes les heures de 00 à 23
                 hourly_counts['HOUR_OF_DAY'] = pd.Categorical(hourly_counts['HOUR_OF_DAY'], categories=hourly_categories, ordered=True)
-                hourly_counts = hourly_counts.sort_values('HOUR_OF_DAY').fillna(0)
+                hourly_counts = hourly_counts.sort_values('HOUR_OF_DAY') # .fillna(0) n'est plus nécessaire ici
 
                 if not hourly_counts.empty and hourly_counts['PHYCALLS'].sum() > 0:
                     fig_phycalls = px.line(hourly_counts,
@@ -846,7 +855,7 @@ else:
                     '21--22', '22--23', '23--00'
                 ]
                 avg_times_by_hour['TIME'] = pd.Categorical(avg_times_by_hour['TIME'], categories=hourly_categories_times, ordered=True)
-                avg_times_by_hour = avg_times_by_hour.sort_values('TIME').fillna(0)
+                avg_times_by_hour = avg_times_by_hour.sort_values('TIME').fillna(0) # fillna(0) sur les colonnes numériques, pas la catégorie
                 
                 if not avg_times_by_hour.empty and avg_times_by_hour[perf_cols].sum().sum() > 0:
                     fig_avg_times = px.line(avg_times_by_hour,
