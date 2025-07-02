@@ -640,19 +640,32 @@ else:
 
                 temp_top_tasktype_resp = df_user.groupby('TASKTYPE', as_index=False)['RESPTI'].mean()
                 
-                if not temp_top_tasktype_resp.empty and 'RESPTI' in temp_top_tasktype_resp.columns and temp_top_tasktype_resp['RESPTI'].sum() > 0:
-                    top_tasktype_resp = temp_top_tasktype_resp.nlargest(6, 'RESPTI').sort_values(by='RESPTI', ascending=False) / 1000.0
-                    if not top_tasktype_resp.empty:
-                        fig_top_tasktype_resp = px.bar(top_tasktype_resp,
-                                                        x='TASKTYPE', y='RESPTI',
-                                                        title="Top 6 TASKTYPE par Temps de Réponse Moyen (s)",
-                                                        labels={'RESPTI': 'Temps de Réponse Moyen (s)', 'TASKTYPE': 'Type de Tâche'},
-                                                        color='RESPTI', color_continuous_scale=px.colors.sequential.Oranges)
-                        st.plotly_chart(fig_top_tasktype_resp, use_container_width=True)
+                if not temp_top_tasktype_resp.empty and 'RESPTI' in temp_top_tasktype_resp.columns and pd.api.types.is_numeric_dtype(temp_top_tasktype_resp['RESPTI']):
+                    # Ensure the column used for nlargest is numeric and has non-zero sum
+                    # Check if there are enough non-NaN values to perform nlargest
+                    if temp_top_tasktype_resp['RESPTI'].dropna().count() >= 6: # Check if at least 6 non-NaN values
+                        top_tasktype_resp_intermediate = temp_top_tasktype_resp.nlargest(6, 'RESPTI').sort_values(by='RESPTI', ascending=False)
+                        
+                        # NEW CHECK: Check if the result after nlargest is empty before division
+                        if not top_tasktype_resp_intermediate.empty and 'RESPTI' in top_tasktype_resp_intermediate.columns:
+                            # Ensure the column is numeric before division
+                            top_tasktype_resp_intermediate['RESPTI'] = pd.to_numeric(top_tasktype_resp_intermediate['RESPTI'], errors='coerce').fillna(0).astype(float)
+                            top_tasktype_resp = top_tasktype_resp_intermediate / 1000.0
+                            if not top_tasktype_resp.empty and top_tasktype_resp['RESPTI'].sum() > 0:
+                                fig_top_tasktype_resp = px.bar(top_tasktype_resp,
+                                                                x='TASKTYPE', y='RESPTI',
+                                                                title="Top 6 TASKTYPE par Temps de Réponse Moyen (s)",
+                                                                labels={'RESPTI': 'Temps de Réponse Moyen (s)', 'TASKTYPE': 'Type de Tâche'},
+                                                                color='RESPTI', color_continuous_scale=px.colors.sequential.Oranges)
+                                st.plotly_chart(fig_top_tasktype_resp, use_container_width=True)
+                            else:
+                                st.info("Pas de données valides pour les Top Types de Tâches par Temps de Réponse Moyen après filtrage et sélection des 6 plus grandes valeurs (résultat vide ou zéro après division).")
+                        else:
+                            st.info("Pas de données valides pour les Top Types de Tâches par Temps de Réponse Moyen après filtrage et sélection des 6 plus grandes valeurs (résultat intermédiaire vide).")
                     else:
-                        st.info("Pas de données valides pour les Top Types de Tâches par Temps de Réponse Moyen après filtrage et sélection des 6 plus grandes valeurs.")
+                        st.info("Pas assez de données valides dans 'RESPTI' pour déterminer les Top 6 Types de Tâches après filtrage.")
                 else:
-                    st.info("Pas de données valides pour les Top Types de Tâches par Temps de Réponse Moyen après filtrage (la moyenne est vide ou zéro).")
+                    st.info("Pas de données valides pour les Top Types de Tâches par Temps de Réponse Moyen après filtrage (la moyenne est vide ou non-numérique).")
             else:
                 st.info("Colonnes 'TASKTYPE' ou 'RESPTI' manquantes ou RESPTI total est zéro/vide après filtrage.")
             
@@ -689,18 +702,24 @@ else:
                     st.markdown("**Top Comptes (ACCOUNT) avec temps de réponse élevé :**")
                     top_accounts_long_resp = long_duration_users['ACCOUNT'].value_counts().nlargest(10).reset_index()
                     top_accounts_long_resp.columns = ['ACCOUNT', 'Occurrences']
-                    fig_top_acc_long = px.bar(top_accounts_long_resp, x='ACCOUNT', y='Occurrences',
-                                                title="Top Comptes avec Temps de Réponse Élevé",
-                                                color='Occurrences', color_continuous_scale=px.colors.sequential.Greens)
-                    st.plotly_chart(fig_top_acc_long, use_container_width=True)
+                    if not top_accounts_long_resp.empty and top_accounts_long_resp['Occurrences'].sum() > 0:
+                        fig_top_acc_long = px.bar(top_accounts_long_resp, x='ACCOUNT', y='Occurrences',
+                                                    title="Top Comptes avec Temps de Réponse Élevé",
+                                                    color='Occurrences', color_continuous_scale=px.colors.sequential.Greens)
+                        st.plotly_chart(fig_top_acc_long, use_container_width=True)
+                    else:
+                        st.info("Pas de données pour les Top Comptes avec temps de réponse élevé après filtrage.")
                     
                     st.markdown("**Top Opérations (ENTRY_ID) avec temps de réponse élevé :**")
                     top_entry_id_long_resp = long_duration_users['ENTRY_ID'].value_counts().nlargest(10).reset_index()
                     top_entry_id_long_resp.columns = ['ENTRY_ID', 'Occurrences']
-                    fig_top_entry_long = px.bar(top_entry_id_long_resp, x='ENTRY_ID', y='Occurrences',
-                                                title="Top ENTRY_ID avec Temps de Réponse Élevé",
-                                                color='Occurrences', color_continuous_scale=px.colors.sequential.Teal)
-                    st.plotly_chart(fig_top_entry_long, use_container_width=True)
+                    if not top_entry_id_long_resp.empty and top_entry_id_long_resp['Occurrences'].sum() > 0:
+                        fig_top_entry_long = px.bar(top_entry_id_long_resp, x='ENTRY_ID', y='Occurrences',
+                                                    title="Top ENTRY_ID avec Temps de Réponse Élevé",
+                                                    color='Occurrences', color_continuous_scale=px.colors.sequential.Teal)
+                        st.plotly_chart(fig_top_entry_long, use_container_width=True)
+                    else:
+                        st.info("Pas de données pour les Top Opérations avec temps de réponse élevé après filtrage.")
                 else:
                     st.info("Aucune transaction avec un temps de réponse élevé (au-dessus du 90ème percentile) après filtrage.")
             else:
@@ -772,7 +791,7 @@ else:
                 for col in io_detailed_metrics_counts:
                     df_user[col] = pd.to_numeric(df_user[col], errors='coerce').fillna(0).astype(float)
                 df_io_counts = df_user.groupby('TASKTYPE', as_index=False)[io_detailed_metrics_counts].sum().nlargest(10, 'PHYREADCNT')
-                if not df_io_counts.empty and df_io_counts[io_detailed_metrics_counts].sum().sum() > 0:
+                if not df_io_counts.empty and df_io_counts['PHYREADCNT'].sum() > 0: # Check sum of the column used for nlargest
                     fig_io_counts = px.bar(df_io_counts, x='TASKTYPE', y=io_detailed_metrics_counts,
                                            title="Total des Opérations de Lecture/Écriture (Comptes) par Type de Tâche (Top 10)",
                                            labels={'value': 'Nombre d\'Opérations', 'variable': 'Type d\'Opération', 'TASKTYPE': 'Type de Tâche'},
@@ -800,7 +819,7 @@ else:
                 for col in io_detailed_metrics_buffers_records:
                     df_user[col] = pd.to_numeric(df_user[col], errors='coerce').fillna(0).astype(float)
                 df_io_buffers_records = df_user.groupby('TASKTYPE', as_index=False)[io_detailed_metrics_buffers_records].sum().nlargest(10, 'READDIRREC')
-                if not df_io_buffers_records.empty and df_io_buffers_records[io_detailed_metrics_buffers_records].sum().sum() > 0:
+                if not df_io_buffers_records.empty and df_io_buffers_records['READDIRREC'].sum() > 0: # Check sum of the column used for nlargest
                     fig_io_buffers_records = px.bar(df_io_buffers_records, x='TASKTYPE', y=io_detailed_metrics_buffers_records,
                                                     title="Utilisation des Buffers et Enregistrements par Type de Tâche (Top 10)",
                                                     labels={'value': 'Nombre', 'variable': 'Métrique', 'TASKTYPE': 'Type de Tâche'},
@@ -825,7 +844,7 @@ else:
                 for col in comm_metrics_filtered:
                     df_user[col] = pd.to_numeric(df_user[col], errors='coerce').fillna(0).astype(float)
                 df_comm_metrics = df_user.groupby('TASKTYPE', as_index=False)[comm_metrics_filtered].sum().nlargest(4, 'DSQLCNT')
-                if not df_comm_metrics.empty and df_comm_metrics[comm_metrics_filtered].sum().sum() > 0:
+                if not df_comm_metrics.empty and df_comm_metrics['DSQLCNT'].sum() > 0: # Check sum of the column used for nlargest
                     fig_comm_metrics = px.bar(df_comm_metrics, x='TASKTYPE', y=comm_metrics_filtered,
                                                 title="Communications et Appels Système par Type de Tâche (Top 4)",
                                                 labels={'value': 'Nombre / Temps (ms)', 'variable': 'Métrique', 'TASKTYPE': 'Type de Tâche'},
@@ -984,19 +1003,29 @@ else:
 
                 temp_task_perf = df_task.groupby('TASKTYPE', as_index=False)[perf_cols_task].mean()
                 
-                if not temp_task_perf.empty and 'RESPTI' in temp_task_perf.columns and temp_task_perf['RESPTI'].sum() > 0: # Check before nlargest and division
-                    task_perf = temp_task_perf.nlargest(10, 'RESPTI') / 1000.0
-                    if not task_perf.empty and task_perf[perf_cols_task].sum().sum() > 0:
-                        fig_task_perf = px.bar(task_perf,
-                                                x='TASKTYPE', y=perf_cols_task,
-                                                title="Top 10 TASKTYPE par Temps de Réponse et CPU (s)",
-                                                labels={'value': 'Temps Moyen (s)', 'variable': 'Métrique', 'TASKTYPE': 'Type de Tâche'},
-                                                barmode='group', color_discrete_sequence=px.colors.qualitative.Bold)
-                        st.plotly_chart(fig_task_perf, use_container_width=True)
+                if not temp_task_perf.empty and 'RESPTI' in temp_task_perf.columns and pd.api.types.is_numeric_dtype(temp_task_perf['RESPTI']): # Check before nlargest and division
+                    if temp_task_perf['RESPTI'].dropna().count() >= 10: # Check if at least 10 non-NaN values for nlargest
+                        task_perf_intermediate = temp_task_perf.nlargest(10, 'RESPTI').sort_values(by='RESPTI', ascending=False)
+                        if not task_perf_intermediate.empty and task_perf_intermediate['RESPTI'].sum() > 0:
+                            # Ensure columns are numeric before division
+                            for col in perf_cols_task:
+                                task_perf_intermediate[col] = pd.to_numeric(task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
+                            task_perf = task_perf_intermediate / 1000.0
+                            if not task_perf.empty and task_perf['RESPTI'].sum() > 0:
+                                fig_task_perf = px.bar(task_perf,
+                                                        x='TASKTYPE', y=perf_cols_task,
+                                                        title="Top 10 TASKTYPE par Temps de Réponse et CPU (s)",
+                                                        labels={'value': 'Temps Moyen (s)', 'variable': 'Métrique', 'TASKTYPE': 'Type de Tâche'},
+                                                        barmode='group', color_discrete_sequence=px.colors.qualitative.Bold)
+                                st.plotly_chart(fig_task_perf, use_container_width=True)
+                            else:
+                                st.info("Pas de données valides pour les temps de performance des tâches après filtrage et sélection des 10 plus grandes valeurs (résultat vide ou zéro après division).")
+                        else:
+                            st.info("Pas de données valides pour les temps de performance des tâches après filtrage et sélection des 10 plus grandes valeurs (résultat intermédiaire vide).")
                     else:
-                        st.info("Pas de données valides pour les temps de performance des tâches après filtrage et sélection des 10 plus grandes valeurs.")
+                        st.info("Pas assez de données valides dans 'RESPTI' pour déterminer les Top 10 Types de Tâches après filtrage.")
                 else:
-                    st.info("Pas de données valides pour les temps de performance des tâches après filtrage (la moyenne est vide ou zéro).")
+                    st.info("Pas de données valides pour les temps de performance des tâches après filtrage (la moyenne est vide ou non-numérique).")
             else:
                 st.info("Colonnes 'TASKTYPE', 'RESPTI' ou 'CPUTI' manquantes ou leur somme est zéro/vide après filtrage.")
 
@@ -1015,7 +1044,7 @@ else:
                 for col in wait_gui_metrics:
                     df_task[col] = pd.to_numeric(df_task[col], errors='coerce').fillna(0).astype(float)
                 df_wait_gui = df_task.groupby('TASKTYPE', as_index=False)[wait_gui_metrics].sum().nlargest(10, 'QUEUETI')
-                if not df_wait_gui.empty and df_wait_gui[wait_gui_metrics].sum().sum() > 0:
+                if not df_wait_gui.empty and df_wait_gui['QUEUETI'].sum() > 0:
                     fig_wait_gui = px.bar(df_wait_gui, x='TASKTYPE',
                                           y=wait_gui_metrics,
                                           title="Temps d'Attente et GUI par Type de Tâche (Top 10)",
@@ -1043,7 +1072,7 @@ else:
                 for col in io_metrics_tasktimes:
                     df_task[col] = pd.to_numeric(df_task[col], errors='coerce').fillna(0).astype(float)
                 df_io_tasktimes = df_task.groupby('TASKTYPE', as_index=False)[io_metrics_tasktimes].sum().nlargest(10, 'READDIRREC')
-                if not df_io_tasktimes.empty and df_io_tasktimes[io_metrics_tasktimes].sum().sum() > 0:
+                if not df_io_tasktimes.empty and df_io_tasktimes['READDIRREC'].sum() > 0:
                     fig_io_tasktimes = px.bar(df_io_tasktimes, x='TASKTYPE', y=io_metrics_tasktimes,
                                               title="Opérations d'E/S par Type de Tâche (Top 10)",
                                               labels={'value': 'Nombre d\'Opérations', 'variable': 'Métrique E/S', 'TASKTYPE': 'Type de Tâche'},
@@ -1098,12 +1127,15 @@ else:
                 hourly_metrics_temp = df_hitlist.set_index('FULL_DATETIME')[hitlist_perf_cols].resample('H').mean()
                 if not hourly_metrics_temp.empty and hourly_metrics_temp.sum().sum() > 0:
                     hourly_metrics = hourly_metrics_temp.dropna()
-                    fig_hourly_perf = px.line(hourly_metrics.reset_index(), x='FULL_DATETIME', y=hitlist_perf_cols,
-                                              title="Tendance Horaire du Temps de Réponse et CPU (s)",
-                                              labels={'FULL_DATETIME': 'Heure', 'value': 'Temps Moyen (s)', 'variable': 'Métrique'},
-                                              color_discrete_sequence=px.colors.qualitative.Dark2)
-                    fig_hourly_perf.update_xaxes(dtick="H1", tickformat="%H:%M")
-                    st.plotly_chart(fig_hourly_perf, use_container_width=True)
+                    if not hourly_metrics.empty and hourly_metrics.sum().sum() > 0: # Check again after dropna
+                        fig_hourly_perf = px.line(hourly_metrics.reset_index(), x='FULL_DATETIME', y=hitlist_perf_cols,
+                                                  title="Tendance Horaire du Temps de Réponse et CPU (s)",
+                                                  labels={'FULL_DATETIME': 'Heure', 'value': 'Temps Moyen (s)', 'variable': 'Métrique'},
+                                                  color_discrete_sequence=px.colors.qualitative.Dark2)
+                        fig_hourly_perf.update_xaxes(dtick="H1", tickformat="%H:%M")
+                        st.plotly_chart(fig_hourly_perf, use_container_width=True)
+                    else:
+                        st.info("Pas de données valides pour la tendance horaire de performance Hitlist DB après filtrage et dropna.")
                 else:
                     st.info("Pas de données valides pour la tendance horaire de performance Hitlist DB après filtrage.")
             else:
@@ -1136,7 +1168,7 @@ else:
                     avg_procti_by_tasktype_temp = df_filtered_tasktype.groupby('TASKTYPE', as_index=False)['PROCTI'].mean()
                     if not avg_procti_by_tasktype_temp.empty and avg_procti_by_tasktype_temp['PROCTI'].sum() > 0:
                         avg_procti_by_tasktype = avg_procti_by_tasktype_temp.sort_values(by='PROCTI', ascending=False) / 1000.0
-                        if not avg_procti_by_tasktype.empty:
+                        if not avg_procti_by_tasktype.empty and avg_procti_by_tasktype['PROCTI'].sum() > 0:
                             fig_procti_bar = px.bar(avg_procti_by_tasktype, x='TASKTYPE', y='PROCTI',
                                                     title="Temps Moyen de Traitement (s) par Top 5 TASKTYPE",
                                                     labels={'TASKTYPE': 'Type de Tâche', 'PROCTI': 'Temps Moyen de Traitement (s)'},
@@ -1434,28 +1466,31 @@ else:
                     logon_counts = df_valid_logons['GLTGB_DATE'].dt.date.value_counts().sort_index().reset_index()
                     logon_counts.columns = ['Date de Dernier Logon', 'Nombre d\'Utilisateurs']
                     
-                    fig_logon_dates = px.line(logon_counts, x='Date de Dernier Logon', y='Nombre d\'Utilisateurs',
-                                              title="Nombre d'Utilisateurs par Date de Dernier Logon",
-                                              labels={'Date de Dernier Logon': 'Date', 'Nombre d\'Utilisateurs': 'Nombre d\'Utilisateurs'},
-                                              markers=True,
-                                              color_discrete_sequence=['#6A0DAD'])
-                    
-                    fig_logon_dates.update_xaxes(
-                        tickangle=45,
-                        rangeselector=dict(
-                            buttons=list([
-                                dict(count=1, label="1m", step="month", stepmode="backward"),
-                                dict(count=6, label="6m", step="month", stepmode="backward"),
-                                dict(count=1, label="YTD", step="year", stepmode="todate"),
-                                dict(count=1, label="1y", step="year", stepmode="backward"),
-                                dict(step="all")
-                            ])
-                        ),
-                        rangeslider=dict(visible=True),
-                        type="date"
-                    )
-                    
-                    st.plotly_chart(fig_logon_dates, use_container_width=True)
+                    if not logon_counts.empty and logon_counts['Nombre d\'Utilisateurs'].sum() > 0:
+                        fig_logon_dates = px.line(logon_counts, x='Date de Dernier Logon', y='Nombre d\'Utilisateurs',
+                                                  title="Nombre d'Utilisateurs par Date de Dernier Logon",
+                                                  labels={'Date de Dernier Logon': 'Date', 'Nombre d\'Utilisateurs': 'Nombre d\'Utilisateurs'},
+                                                  markers=True,
+                                                  color_discrete_sequence=['#6A0DAD'])
+                        
+                        fig_logon_dates.update_xaxes(
+                            tickangle=45,
+                            rangeselector=dict(
+                                buttons=list([
+                                    dict(count=1, label="1m", step="month", stepmode="backward"),
+                                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                                    dict(count=1, label="YTD", step="year", stepmode="todate"),
+                                    dict(count=1, label="1y", step="year", stepmode="backward"),
+                                    dict(step="all")
+                                ])
+                            ),
+                            rangeslider=dict(visible=True),
+                            type="date"
+                        )
+                        
+                        st.plotly_chart(fig_logon_dates, use_container_width=True)
+                    else:
+                        st.info("Aucune donnée de date de dernier logon valide après filtrage ou la somme des utilisateurs est zéro.")
                 else:
                     st.info("Aucune donnée de date de dernier logon valide après filtrage.")
             else:
