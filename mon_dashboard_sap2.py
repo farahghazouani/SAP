@@ -1023,7 +1023,7 @@ else:
                             for col in perf_cols_task:
                                 top_task_perf_intermediate[col] = pd.to_numeric(top_task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
                             
-                            # Apply division only to the numeric columns
+                            # Apply division only to the numeric column
                             task_perf = top_task_perf_intermediate.copy() # Create a copy
                             for col in perf_cols_task:
                                 task_perf[col] = task_perf[col] / 1000.0
@@ -1109,7 +1109,7 @@ else:
             st.warning("Données des temps de tâches non disponibles ou filtrées à vide.")
 
     elif st.session_state.current_section == "Insights Hitlist DB":
-        # --- NOUVEL ONGLET: Insights Hitlist DB (HITLIST_DATABASE_final_cleaned_clean.xlsx) ---
+        # --- NOUVEL ONGLET: Insights Détaillés de la Base de Données (Hitlist DB) ---
         st.header("🔍 Insights Détaillés de la Base de Données (Hitlist DB)")
         df_hitlist = dfs['hitlist_db'].copy()
         
@@ -1180,21 +1180,23 @@ else:
             else:
                 st.info("Colonne 'RESPTI' manquante ou total est zéro/vide après filtrage.")
 
-            st.subheader("Corrélation entre Temps de Réponse (RESPTI) et Temps CPU (CPUTI)")
-            if 'RESPTI' in df_hitlist.columns and 'CPUTI' in df_hitlist.columns and df_hitlist['RESPTI'].sum() > 0 and df_hitlist['CPUTI'].sum() > 0:
-                df_hitlist['RESPTI'] = pd.to_numeric(df_hitlist['RESPTI'], errors='coerce').fillna(0).astype(float)
-                df_hitlist['CPUTI'] = pd.to_numeric(df_hitlist['CPUTI'], errors='coerce').fillna(0).astype(float)
-                fig_resp_cpu_hitlist = px.scatter(df_hitlist, x='CPUTI', y='RESPTI',
-                                                  title="Temps de Réponse vs. Temps CPU (Hitlist DB)",
-                                                  labels={'CPUTI': 'Temps CPU (ms)', 'RESPTI': 'Temps de Réponse (ms)'},
-                                                  hover_data=['ACCOUNT', 'REPORT', 'TASKTYPE'],
-                                                  color='TASKTYPE' if 'TASKTYPE' in df_hitlist.columns else None,
-                                                  log_x=True,
-                                                  log_y=True,
-                                                  color_discrete_sequence=px.colors.qualitative.Plotly)
-                st.plotly_chart(fig_resp_cpu_hitlist, use_container_width=True)
-            else:
-                st.info("Colonnes 'RESPTI' ou 'CPUTI' manquantes ou leurs totaux sont zéro/vides après filtrage pour la corrélation.")
+            # --- DÉBUT DU BLOC SUPPRIMÉ ---
+            # st.subheader("Corrélation entre Temps de Réponse (RESPTI) et Temps CPU (CPUTI)")
+            # if 'RESPTI' in df_hitlist.columns and 'CPUTI' in df_hitlist.columns and df_hitlist['RESPTI'].sum() > 0 and df_hitlist['CPUTI'].sum() > 0:
+            #     df_hitlist['RESPTI'] = pd.to_numeric(df_hitlist['RESPTI'], errors='coerce').fillna(0).astype(float)
+            #     df_hitlist['CPUTI'] = pd.to_numeric(df_hitlist['CPUTI'], errors='coerce').fillna(0).astype(float)
+            #     fig_resp_cpu_hitlist = px.scatter(df_hitlist, x='CPUTI', y='RESPTI',
+            #                                       title="Temps de Réponse vs. Temps CPU (Hitlist DB)",
+            #                                       labels={'CPUTI': 'Temps CPU (ms)', 'RESPTI': 'Temps de Réponse (ms)'},
+            #                                       hover_data=['ACCOUNT', 'REPORT', 'TASKTYPE'],
+            #                                       color='TASKTYPE' if 'TASKTYPE' in df_hitlist.columns else None,
+            #                                       log_x=True,
+            #                                       log_y=True,
+            #                                       color_discrete_sequence=px.colors.qualitative.Plotly)
+            #     st.plotly_chart(fig_resp_cpu_hitlist, use_container_width=True)
+            # else:
+            #     st.info("Colonnes 'RESPTI' ou 'CPUTI' manquantes ou leurs totaux sont zéro/vides après filtrage pour la corrélation.")
+            # --- FIN DU BLOC SUPPRIMÉ ---
 
             st.subheader("Tendance du Temps de Réponse Moyen par Heure (Hitlist DB)")
             if 'FULL_DATETIME' in df_hitlist.columns and pd.api.types.is_datetime64_any_dtype(df_hitlist['FULL_DATETIME']) and not df_hitlist['FULL_DATETIME'].isnull().all() and 'RESPTI' in df_hitlist.columns and df_hitlist['RESPTI'].sum() > 0:
