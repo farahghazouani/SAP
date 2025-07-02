@@ -7,15 +7,18 @@ import re
 import plotly.figure_factory as ff
 
 # --- Chemins vers vos fichiers de données ---
+# ATTENTION : Ces chemins ont été mis à jour pour être RELATIFS.
+# Cela signifie que les fichiers Excel/CSV doivent se trouver dans le MÊME dossier
+# que ce script Python lorsque vous le déployez (par exemple, sur GitHub pour Streamlit Community Cloud).
 DATA_PATHS = {
-    "memory": r"C:\Users\Farouha\memory_final_cleaned_clean.xlsx",
-    "hitlist_db": r"C:\Users\Farouha\HITLIST_DATABASE_final_cleaned_clean.xlsx",
-    "times": r"C:\Users\Farouha\Times_final_cleaned_clean.xlsx",
-    "tasktimes": r"C:\Users\Farouha\TASKTIMES_final_cleaned_clean.xlsx",
-    "usertcode": r"C:\Users\Farouha\USERTCODE_cleaned.xlsx",
-    "performance": r"C:\Users\Farouha\AL_GET_PERFORMANCE_final_cleaned_clean.xlsx",
-    "sql_trace_summary": r"C:\Users\Farouha\performance_trace_summary_final_cleaned_clean.xlsx",
-    "usr02": r"c:\Users\Farouha\Desktop\fichiers_SAP\usr02_data.xlsx",
+    "memory": "memory_final_cleaned_clean.xlsx",
+    "hitlist_db": "HITLIST_DATABASE_final_cleaned_clean.xlsx",
+    "times": "Times_final_cleaned_clean.xlsx",
+    "tasktimes": "TASKTIMES_final_cleaned_clean.xlsx",
+    "usertcode": "USERTCODE_cleaned.xlsx",
+    "performance": "AL_GET_PERFORMANCE_final_cleaned_clean.xlsx",
+    "sql_trace_summary": "performance_trace_summary_final_cleaned_clean.xlsx",
+    "usr02": "usr02_data.xlsx",
 }
 
 # --- Configuration de la page Streamlit ---
