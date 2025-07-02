@@ -1,7 +1,6 @@
-    streamlit
-    pandas
-    plotly
-    numpy
-    scipy==1.7.3
-    statsmodels==0.12.2
-    
+streamlit
+pandas
+plotly
+numpy
+scipy==1.5.4
+statsmodels==0.11.1
