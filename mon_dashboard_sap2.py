@@ -633,24 +633,27 @@ else:
                 st.warning("La colonne 'TASKTYPE' est manquante dans les données utilisateurs pour le filtrage.")
 
         if not df_user.empty:
+            st.subheader("Top Types de Tâches (TASKTYPE) par Temps de Réponse Moyen")
             if 'TASKTYPE' in df_user.columns and 'RESPTI' in df_user.columns and df_user['RESPTI'].sum() > 0:
-                st.subheader("Top Types de Tâches (TASKTYPE) par Temps de Réponse Moyen")
                 # Ensure RESPTI is numeric before aggregation
                 df_user['RESPTI'] = pd.to_numeric(df_user['RESPTI'], errors='coerce').fillna(0).astype(float)
 
                 temp_top_tasktype_resp = df_user.groupby('TASKTYPE', as_index=False)['RESPTI'].mean()
                 
                 if not temp_top_tasktype_resp.empty and 'RESPTI' in temp_top_tasktype_resp.columns and pd.api.types.is_numeric_dtype(temp_top_tasktype_resp['RESPTI']):
-                    # Ensure the column used for nlargest is numeric and has non-zero sum
                     # Check if there are enough non-NaN values to perform nlargest
                     if temp_top_tasktype_resp['RESPTI'].dropna().count() >= 6: # Check if at least 6 non-NaN values
                         top_tasktype_resp_intermediate = temp_top_tasktype_resp.nlargest(6, 'RESPTI').sort_values(by='RESPTI', ascending=False)
                         
-                        # NEW CHECK: Check if the result after nlargest is empty before division
+                        # NEW CORRECTION: Apply division only to the 'RESPTI' column
                         if not top_tasktype_resp_intermediate.empty and 'RESPTI' in top_tasktype_resp_intermediate.columns:
                             # Ensure the column is numeric before division
                             top_tasktype_resp_intermediate['RESPTI'] = pd.to_numeric(top_tasktype_resp_intermediate['RESPTI'], errors='coerce').fillna(0).astype(float)
-                            top_tasktype_resp = top_tasktype_resp_intermediate / 1000.0
+                            
+                            # Apply division only to the numeric column
+                            top_tasktype_resp = top_tasktype_resp_intermediate.copy() # Create a copy to avoid SettingWithCopyWarning
+                            top_tasktype_resp['RESPTI'] = top_tasktype_resp['RESPTI'] / 1000.0
+                            
                             if not top_tasktype_resp.empty and top_tasktype_resp['RESPTI'].sum() > 0:
                                 fig_top_tasktype_resp = px.bar(top_tasktype_resp,
                                                                 x='TASKTYPE', y='RESPTI',
@@ -928,7 +931,11 @@ else:
                 avg_times_by_hour_temp = df_times_data.groupby("TIME", as_index=False)[perf_cols].mean()
                 
                 if not avg_times_by_hour_temp.empty and avg_times_by_hour_temp[perf_cols].sum().sum() > 0: # Check before division
-                    avg_times_by_hour = avg_times_by_hour_temp / 1000.0
+                    # NEW CORRECTION: Apply division only to the numeric columns
+                    avg_times_by_hour = avg_times_by_hour_temp.copy() # Create a copy
+                    for col in perf_cols:
+                        avg_times_by_hour[col] = avg_times_by_hour[col] / 1000.0
+
                     hourly_categories_times = [
                         '00--06', '06--07', '07--08', '08--09', '09--10', '10--11', '11--12', '12--13',
                         '13--14', '14--15', '15--16', '16--17', '17--18', '18--19', '19--20', '20--21',
@@ -1010,7 +1017,12 @@ else:
                             # Ensure columns are numeric before division
                             for col in perf_cols_task:
                                 task_perf_intermediate[col] = pd.to_numeric(task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
-                            task_perf = task_perf_intermediate / 1000.0
+                            
+                            # NEW CORRECTION: Apply division only to the numeric columns
+                            task_perf = task_perf_intermediate.copy() # Create a copy
+                            for col in perf_cols_task:
+                                task_perf[col] = task_perf[col] / 1000.0
+                            
                             if not task_perf.empty and task_perf['RESPTI'].sum() > 0:
                                 fig_task_perf = px.bar(task_perf,
                                                         x='TASKTYPE', y=perf_cols_task,
@@ -1128,7 +1140,12 @@ else:
                 if not hourly_metrics_temp.empty and hourly_metrics_temp.sum().sum() > 0:
                     hourly_metrics = hourly_metrics_temp.dropna()
                     if not hourly_metrics.empty and hourly_metrics.sum().sum() > 0: # Check again after dropna
-                        fig_hourly_perf = px.line(hourly_metrics.reset_index(), x='FULL_DATETIME', y=hitlist_perf_cols,
+                        # NEW CORRECTION: Apply division only to the numeric columns
+                        hourly_metrics_divided = hourly_metrics.copy() # Create a copy
+                        for col in hitlist_perf_cols:
+                            hourly_metrics_divided[col] = hourly_metrics_divided[col] / 1000.0
+
+                        fig_hourly_perf = px.line(hourly_metrics_divided.reset_index(), x='FULL_DATETIME', y=hitlist_perf_cols,
                                                   title="Tendance Horaire du Temps de Réponse et CPU (s)",
                                                   labels={'FULL_DATETIME': 'Heure', 'value': 'Temps Moyen (s)', 'variable': 'Métrique'},
                                                   color_discrete_sequence=px.colors.qualitative.Dark2)
@@ -1167,7 +1184,10 @@ else:
                 if not df_filtered_tasktype.empty:
                     avg_procti_by_tasktype_temp = df_filtered_tasktype.groupby('TASKTYPE', as_index=False)['PROCTI'].mean()
                     if not avg_procti_by_tasktype_temp.empty and avg_procti_by_tasktype_temp['PROCTI'].sum() > 0:
-                        avg_procti_by_tasktype = avg_procti_by_tasktype_temp.sort_values(by='PROCTI', ascending=False) / 1000.0
+                        # NEW CORRECTION: Apply division only to the 'PROCTI' column
+                        avg_procti_by_tasktype = avg_procti_by_tasktype_temp.copy() # Create a copy
+                        avg_procti_by_tasktype['PROCTI'] = avg_procti_by_tasktype['PROCTI'] / 1000.0
+                        
                         if not avg_procti_by_tasktype.empty and avg_procti_by_tasktype['PROCTI'].sum() > 0:
                             fig_procti_bar = px.bar(avg_procti_by_tasktype, x='TASKTYPE', y='PROCTI',
                                                     title="Temps Moyen de Traitement (s) par Top 5 TASKTYPE",
