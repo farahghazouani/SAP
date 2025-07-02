@@ -645,7 +645,7 @@ else:
                     if temp_top_tasktype_resp['RESPTI'].dropna().count() >= 6: # Check if at least 6 non-NaN values
                         top_tasktype_resp_intermediate = temp_top_tasktype_resp.nlargest(6, 'RESPTI').sort_values(by='RESPTI', ascending=False)
                         
-                        # NEW CORRECTION: Apply division only to the 'RESPTI' column
+                        # Apply division only to the 'RESPTI' column
                         if not top_tasktype_resp_intermediate.empty and 'RESPTI' in top_tasktype_resp_intermediate.columns:
                             # Ensure the column is numeric before division
                             top_tasktype_resp_intermediate['RESPTI'] = pd.to_numeric(top_tasktype_resp_intermediate['RESPTI'], errors='coerce').fillna(0).astype(float)
@@ -773,7 +773,7 @@ else:
                                                 color='TASKTYPE' if 'TASKTYPE' in df_user.columns else None,
                                                 log_x=True,
                                                 log_y=True,
-                                                trendline="ols",
+                                                trendline="ols", # RE-ADDED: trendline="ols" - requires 'statsmodels'
                                                 color_discrete_sequence=px.colors.qualitative.Alphabet)
                 st.plotly_chart(fig_resp_cpu_corr, use_container_width=True)
             else:
@@ -886,7 +886,7 @@ else:
                 
                 hourly_categories = [str(i).zfill(2) for i in range(24)] # Générer toutes les heures de 00 à 23
                 hourly_counts['HOUR_OF_DAY'] = pd.Categorical(hourly_counts['HOUR_OF_DAY'], categories=hourly_categories, ordered=True)
-                hourly_counts = hourly_counts.sort_values('HOUR_OF_DAY') # .fillna(0) n'est plus nécessaire ici
+                hourly_counts = hourly_counts.sort_values('HOUR_OF_DAY')
 
                 if not hourly_counts.empty and hourly_counts['PHYCALLS'].sum() > 0:
                     fig_phycalls = px.line(hourly_counts,
@@ -931,19 +931,20 @@ else:
                 avg_times_by_hour_temp = df_times_data.groupby("TIME", as_index=False)[perf_cols].mean()
                 
                 if not avg_times_by_hour_temp.empty and avg_times_by_hour_temp[perf_cols].sum().sum() > 0: # Check before division
-                    # NEW CORRECTION: Apply division only to the numeric columns
+                    # Apply division and fillna(0) only to the numeric columns
                     avg_times_by_hour = avg_times_by_hour_temp.copy() # Create a copy
                     for col in perf_cols:
-                        avg_times_by_hour[col] = avg_times_by_hour[col] / 1000.0
-
+                        avg_times_by_hour[col] = (avg_times_by_hour[col] / 1000.0).fillna(0) # Apply fillna here
+                    
                     hourly_categories_times = [
                         '00--06', '06--07', '07--08', '08--09', '09--10', '10--11', '11--12', '12--13',
                         '13--14', '14--15', '15--16', '16--17', '17--18', '18--19', '19--20', '20--21',
                         '21--22', '22--23', '23--00'
                     ]
+                    # Convert 'TIME' to categorical AFTER numeric columns are handled
                     avg_times_by_hour['TIME'] = pd.Categorical(avg_times_by_hour['TIME'], categories=hourly_categories_times, ordered=True)
-                    avg_times_by_hour = avg_times_by_hour.sort_values('TIME').fillna(0) # fillna(0) on numeric columns, not category
-                    
+                    avg_times_by_hour = avg_times_by_hour.sort_values('TIME') # Removed .fillna(0) from here
+
                     if not avg_times_by_hour.empty and avg_times_by_hour[perf_cols].sum().sum() > 0:
                         fig_avg_times = px.line(avg_times_by_hour,
                                                 x='TIME', y=perf_cols,
@@ -1018,7 +1019,7 @@ else:
                             for col in perf_cols_task:
                                 task_perf_intermediate[col] = pd.to_numeric(task_perf_intermediate[col], errors='coerce').fillna(0).astype(float)
                             
-                            # NEW CORRECTION: Apply division only to the numeric columns
+                            # Apply division only to the numeric columns
                             task_perf = task_perf_intermediate.copy() # Create a copy
                             for col in perf_cols_task:
                                 task_perf[col] = task_perf[col] / 1000.0
@@ -1140,7 +1141,7 @@ else:
                 if not hourly_metrics_temp.empty and hourly_metrics_temp.sum().sum() > 0:
                     hourly_metrics = hourly_metrics_temp.dropna()
                     if not hourly_metrics.empty and hourly_metrics.sum().sum() > 0: # Check again after dropna
-                        # NEW CORRECTION: Apply division only to the numeric columns
+                        # Apply division only to the numeric columns
                         hourly_metrics_divided = hourly_metrics.copy() # Create a copy
                         for col in hitlist_perf_cols:
                             hourly_metrics_divided[col] = hourly_metrics_divided[col] / 1000.0
@@ -1184,7 +1185,7 @@ else:
                 if not df_filtered_tasktype.empty:
                     avg_procti_by_tasktype_temp = df_filtered_tasktype.groupby('TASKTYPE', as_index=False)['PROCTI'].mean()
                     if not avg_procti_by_tasktype_temp.empty and avg_procti_by_tasktype_temp['PROCTI'].sum() > 0:
-                        # NEW CORRECTION: Apply division only to the 'PROCTI' column
+                        # Apply division only to the 'PROCTI' column
                         avg_procti_by_tasktype = avg_procti_by_tasktype_temp.copy() # Create a copy
                         avg_procti_by_tasktype['PROCTI'] = avg_procti_by_tasktype['PROCTI'] / 1000.0
                         
