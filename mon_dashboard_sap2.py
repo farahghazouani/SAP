@@ -479,7 +479,7 @@ else:
     # --- Contenu des sections basé sur la sélection de la barre latérale ---
     if st.session_state.current_section == "Analyse Mémoire":
         # --- Onglet 1: Analyse Mémoire (memory_final_cleaned_clean.xlsx) ---
-        st.header("🧠 Analyse de l'Utilisation Mémoire")
+        st.header(" Analyse de l'Utilisation Mémoire")
         df_mem = dfs['memory'].copy()
         if selected_accounts:
             df_mem = df_mem[df_mem['ACCOUNT'].isin(selected_accounts)]
@@ -1544,3 +1544,4 @@ with st.expander("🔍 Afficher tous les DataFrames chargés (pour débogage)"):
             st.text(buffer.getvalue())
             st.write(f"Description statistique pour {key}:")
             st.dataframe(df.describe())
+
